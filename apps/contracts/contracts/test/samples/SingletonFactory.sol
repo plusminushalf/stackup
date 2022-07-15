@@ -8,19 +8,45 @@ pragma solidity 0.8.9;
  * @author Ricardo Guilherme Schmidt (Status Research & Development GmbH)
  */
 contract SingletonFactory {
-  event Deployed(address createdContract, bytes32 salt);
+  event Deployed(address createdContract);
 
   /**
-   * @notice Deploys `initCode` using `salt` for defining the deterministic address.
-   * @param initCode Initialization code.
-   * @param salt Arbitrary value to modify resulting address.
-   * @return createdContract Created contract address.
+   * @dev Deploys a contract using `CREATE2`. The address where the contract
+   * will be deployed can be known in advance via {computeAddress}. Note that
+   * a contract cannot be deployed twice using the same salt.
    */
-  function deploy(bytes memory initCode, bytes32 salt) public returns (address payable createdContract) {
+  function deploy(bytes memory bytecode, bytes32 salt) external returns (address) {
+    address addr;
+    console.log("here");
     // solhint-disable-next-line no-inline-assembly
     assembly {
-      createdContract := create2(0, add(initCode, 0x20), mload(initCode), salt)
+      addr := create2(0, add(bytecode, 0x20), mload(bytecode), salt)
     }
-    emit Deployed(createdContract, salt);
+    console.log(addr);
+    require(addr != address(0), "Create2: Failed on deploy");
+    emit Deployed(addr);
+    return addr;
+  }
+
+  /**
+   * @dev Returns the address where a contract will be stored if deployed via {deploy}. Any change in the `bytecode`
+   * or `salt` will result in a new destination address.
+   */
+  function computeAddress(bytes32 salt, bytes memory bytecode) external view returns (address) {
+    return computeAddress(salt, bytecode, address(this));
+  }
+
+  /**
+   * @dev Returns the address where a contract will be stored if deployed via {deploy} from a contract located at
+   * `deployer`. If `deployer` is this contract's address, returns the same value as {computeAddress}.
+   */
+  function computeAddress(
+    bytes32 salt,
+    bytes memory bytecodeHash,
+    address deployer
+  ) internal pure returns (address) {
+    bytes32 bytecodeHashHash = keccak256(bytecodeHash);
+    bytes32 _data = keccak256(abi.encodePacked(bytes1(0xff), deployer, salt, bytecodeHashHash));
+    return address(bytes20(_data << 96));
   }
 }
