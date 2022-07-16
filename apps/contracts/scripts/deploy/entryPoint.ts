@@ -37,17 +37,19 @@ function encodeOp(op: any): string {
 }
 
 function encodeRequestId(op: any, entryPoint: string, chainId: number): string {
-  const params = [encodeOp(op), entryPoint, chainId];
   return ethers.utils.keccak256(
-    ethers.utils.defaultAbiCoder.encode(["bytes32", "address", "uint"], params)
+    ethers.utils.defaultAbiCoder.encode(
+      ["bytes32", "address", "uint"],
+      [encodeOp(op), entryPoint, chainId]
+    )
   );
 }
 
 function encodeSignatures(type: number, signature: any): string {
-  const params = [type, [signature]];
+  console.log(signature);
   return ethers.utils.defaultAbiCoder.encode(
     ["uint8", "(address signer, bytes signature)[]"],
-    params
+    [type, [signature]]
   );
 }
 
@@ -142,10 +144,15 @@ async function main() {
   console.log("Wallet To be Addr: ", walletProxyAddress);
   console.log("----------- END WALLET ADDR & SEND ETH -----------");
 
+  const walletProxyContract = await ethers.getContractAt(
+    "WalletProxy",
+    walletProxyAddress
+  );
+
   const userOp = {
     sender: walletProxyAddress,
-    nonce: WalletProxyDeploySalt,
-    initCode: WalletProxyDeployInitCode,
+    nonce: 0,
+    initCode: String(WalletProxyDeployInitCode),
     callData: "0x",
     callGas: bn(5000000),
     verificationGas: bn(5000000),
@@ -158,15 +165,11 @@ async function main() {
   };
 
   console.log("----------- BUILD & SEND USER OP -----------");
-  const network = await ethers.getDefaultProvider().getNetwork();
-  const encodedRequestId = encodeRequestId(
-    userOp,
-    entryPointAddress,
-    network.chainId
-  );
+
+  const requestId = encodeRequestId(userOp, entryPointAddress, 31337);
 
   const signature = await walletOwner.signMessage(
-    ethers.utils.arrayify(encodedRequestId)
+    ethers.utils.arrayify(requestId)
   );
 
   userOp.signature = encodeSignatures(0, {
@@ -177,7 +180,8 @@ async function main() {
   const tx = await entryPoint.handleOps([userOp], bundler.address, {
     gasLimit: 5000000,
   });
-  console.log(tx);
+  const receipt = await tx.wait();
+  console.log(receipt);
 
   console.log("----------- END BUILD & SEND USER OP -----------");
 
