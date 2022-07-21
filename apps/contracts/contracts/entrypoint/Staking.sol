@@ -4,6 +4,7 @@ pragma solidity 0.8.9;
 
 import "@openzeppelin/contracts/utils/math/SafeCast.sol";
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
+import "hardhat/console.sol";
 
 import "./IEntryPointStaking.sol";
 import "../UserOperation.sol";
@@ -74,14 +75,6 @@ contract Staking is IEntryPointStaking {
   }
 
   /**
-   * @dev Tells if an account has it's deposited balance staked or not
-   */
-  function isStaked(address account) public view returns (bool) {
-    Deposit storage deposit = deposits[account];
-    return deposit.unstakeDelaySec > 0 && deposit.withdrawTime == 0;
-  }
-
-  /**
    * @dev Tells if an account has started it's unstaking process or not
    */
   function isUnstaking(address account) public view returns (bool) {
@@ -110,6 +103,20 @@ contract Staking is IEntryPointStaking {
   }
 
   /**
+   * @dev Tells if an account has it's deposited balance staked or not
+   */
+  function isStaked(address account) public view returns (bool) {
+    Deposit storage deposit = deposits[msg.sender];
+    console.log(
+      "unstakeDelaySec: %d, withdrawTime: %d, account: %s",
+      deposits[msg.sender].unstakeDelaySec,
+      deposit.withdrawTime,
+      account
+    );
+    return deposit.unstakeDelaySec > 0 && deposit.withdrawTime == 0;
+  }
+
+  /**
    * @dev Stakes the sender's deposits. It will deposit the entire msg.value sent to the function and mark it as staked.
    * @param _unstakeDelaySec unstaking delay that will be forced to the account, it can only be greater than or
    * equal to the one set in the contract
@@ -119,10 +126,15 @@ contract Staking is IEntryPointStaking {
     require(_unstakeDelaySec >= unstakeDelaySec, "Staking: Low unstake delay");
     require(_unstakeDelaySec >= deposit.unstakeDelaySec, "Staking: Decreasing unstake time");
 
+    console.log("ho to gaya be %s, _unstakeDelaySec %d, value: %d", msg.sender, _unstakeDelaySec, msg.value);
+
     uint256 deposited = deposit.amount + msg.value;
     deposit.amount = deposited;
     deposit.unstakeDelaySec = _unstakeDelaySec;
     deposit.withdrawTime = 0;
+
+    console.log("unstakeDelaySec: %d, withdrawTime: %d", deposit.unstakeDelaySec, deposit.withdrawTime);
+
     emit StakeLocked(msg.sender, deposited, unstakeDelaySec);
   }
 

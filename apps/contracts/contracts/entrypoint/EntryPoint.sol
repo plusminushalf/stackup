@@ -4,6 +4,7 @@ pragma solidity 0.8.9;
 
 import "@openzeppelin/contracts/utils/Address.sol";
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
+import "hardhat/console.sol";
 
 import "./Staking.sol";
 import "./IEntryPoint.sol";
@@ -120,8 +121,11 @@ contract EntryPoint is IEntryPoint, Staking {
     returns (UserOpVerification memory verification)
   {
     uint256 preValidationGas = gasleft();
+
     _createWalletIfNecessary(opIndex, op);
     bytes32 requestId = op.requestId();
+    console.log("requestId");
+    console.logBytes32(requestId);
     uint256 prefund = op.requiredPrefund();
     _validateWallet(opIndex, op, requestId, prefund);
 
@@ -161,6 +165,7 @@ contract EntryPoint is IEntryPoint, Staking {
     bytes32 requestId,
     uint256 prefund
   ) internal {
+    console.log("yaha par to hu");
     uint256 requiredPrefund = op.hasPaymaster() ? 0 : prefund;
     uint256 initBalance = address(this).balance;
 
@@ -169,6 +174,7 @@ contract EntryPoint is IEntryPoint, Staking {
     } catch Error(string memory reason) {
       revert FailedOp(opIndex, reason);
     } catch (bytes memory error) {
+      console.log("bina reason ki error");
       revert FailedOp(opIndex, string(error));
     }
 

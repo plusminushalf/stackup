@@ -9,6 +9,7 @@ import "@openzeppelin/contracts/utils/cryptography/SignatureChecker.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/access/AccessControlEnumerableUpgradeable.sol";
+import "hardhat/console.sol";
 
 abstract contract UpgradeableACL is IERC1271, Initializable, UUPSUpgradeable, AccessControlEnumerableUpgradeable {
   using ECDSA for bytes32;
@@ -26,7 +27,7 @@ abstract contract UpgradeableACL is IERC1271, Initializable, UUPSUpgradeable, Ac
    * @dev Implementation contract to be used for `WalletProxy`.
    * Marks the implementation contract as initialized in the constructor so it cannot be initialized later on.
    */
-  constructor() initializer {
+  constructor() {
     // solhint-disable-previous-line no-empty-blocks
   }
 
@@ -157,6 +158,14 @@ abstract contract UpgradeableACL is IERC1271, Initializable, UUPSUpgradeable, Ac
     bytes32 hash,
     bytes memory signature
   ) internal view {
+    console.log("idhar tk to aya h lein verify ni hua kya?");
+
+    uint256 test = isOwner(signer) ? 1 : 0;
+
+    uint256 newTest = SignatureChecker.isValidSignatureNow(signer, hash, signature) ? 1 : 0;
+
+    console.log("yaha p dikkat h %d %d", test, newTest);
+
     require(SignatureChecker.isValidSignatureNow(signer, hash, signature), "ACL: Invalid owner sig");
     require(isOwner(signer), "ACL: Signer not an owner");
   }

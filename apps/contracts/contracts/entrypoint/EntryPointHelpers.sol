@@ -5,7 +5,7 @@ pragma solidity 0.8.9;
 import "@openzeppelin/contracts/utils/Address.sol";
 import "@openzeppelin/contracts/utils/math/Math.sol";
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
-
+import "hardhat/console.sol";
 import "../UserOperation.sol";
 
 error FailedOp(uint256 opIndex, string reason);
@@ -50,6 +50,8 @@ library EntryPointHelpers {
    * @dev Tells the entry point request ID: op + entry point + chain ID
    */
   function requestId(UserOperation calldata op) internal view returns (bytes32) {
+    console.logBytes32(hash(op));
+    console.log("address: %s, chainid: %d", address(this), block.chainid);
     return keccak256(abi.encode(hash(op), address(this), block.chainid));
   }
 
