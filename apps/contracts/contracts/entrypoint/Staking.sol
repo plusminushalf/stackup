@@ -54,13 +54,6 @@ contract Staking is IEntryPointStaking {
   }
 
   /**
-   * @dev Tells the entire deposit information for an account
-   */
-  function getDeposit(address account) external view returns (Deposit memory) {
-    return deposits[account];
-  }
-
-  /**
    * @dev Tells the total amount deposited for an account
    */
   function balanceOf(address account) external view override returns (uint256) {
@@ -103,16 +96,17 @@ contract Staking is IEntryPointStaking {
   }
 
   /**
+   * @dev Tells the entire deposit information for an account
+   */
+  function getDeposit(address account) external view returns (Deposit memory) {
+    return deposits[account];
+  }
+
+  /**
    * @dev Tells if an account has it's deposited balance staked or not
    */
   function isStaked(address account) public view returns (bool) {
-    Deposit storage deposit = deposits[msg.sender];
-    console.log(
-      "unstakeDelaySec: %d, withdrawTime: %d, account: %s",
-      deposits[msg.sender].unstakeDelaySec,
-      deposit.withdrawTime,
-      account
-    );
+    Deposit storage deposit = deposits[account];
     return deposit.unstakeDelaySec > 0 && deposit.withdrawTime == 0;
   }
 
@@ -126,14 +120,10 @@ contract Staking is IEntryPointStaking {
     require(_unstakeDelaySec >= unstakeDelaySec, "Staking: Low unstake delay");
     require(_unstakeDelaySec >= deposit.unstakeDelaySec, "Staking: Decreasing unstake time");
 
-    console.log("ho to gaya be %s, _unstakeDelaySec %d, value: %d", msg.sender, _unstakeDelaySec, msg.value);
-
     uint256 deposited = deposit.amount + msg.value;
     deposit.amount = deposited;
     deposit.unstakeDelaySec = _unstakeDelaySec;
     deposit.withdrawTime = 0;
-
-    console.log("unstakeDelaySec: %d, withdrawTime: %d", deposit.unstakeDelaySec, deposit.withdrawTime);
 
     emit StakeLocked(msg.sender, deposited, unstakeDelaySec);
   }

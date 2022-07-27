@@ -18,12 +18,10 @@ contract SingletonFactory {
    */
   function deploy(bytes memory bytecode, bytes32 salt) external returns (address) {
     address addr;
-    console.log("here");
     // solhint-disable-next-line no-inline-assembly
     assembly {
       addr := create2(0, add(bytecode, 0x20), mload(bytecode), salt)
     }
-    console.log(addr);
     require(addr != address(0), "Create2: Failed on deploy");
     emit Deployed(addr);
     return addr;

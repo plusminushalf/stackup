@@ -120,8 +120,10 @@ async function main() {
   // Get Paymaster Contract Deployed
   console.log("----------- DEPLOY PAYMASTER -----------");
   const Paymaster = await ethers.getContractFactory("DappPaymaster");
-  const PaymasterInitCode =
-    Paymaster.getDeployTransaction(entryPointAddress).data;
+  const PaymasterInitCode = Paymaster.getDeployTransaction(
+    entryPointAddress,
+    paymasterSigner.address
+  ).data;
   const PaymasterSalt = ethers.utils.formatBytes32String(
     String.fromCharCode(0)
   );
@@ -136,6 +138,9 @@ async function main() {
     PaymasterInitCode
   );
   console.log("Paymaster Addr: ", paymasterAddress);
+
+  console.log("----------- END DEPLOY PAYMASTER -----------");
+  console.log("----------- ADD STAKLE PAYMASTER -----------");
 
   const paymaster = await ethers.getContractAt(
     "DappPaymaster",
@@ -157,12 +162,15 @@ async function main() {
     }
   );
 
+  console.log(addStakeTx);
+
   await addStakeTx.wait();
 
-  const resp = await entryPoint.isStaked(paymasterAddress);
+  const resp = await entryPoint.getDeposit(paymasterAddress);
   console.log("Paymaster is staked? ", resp);
-
-  console.log("----------- END DEPLOY PAYMASTER -----------");
+  const resp2 = await entryPoint.isStaked(paymasterAddress);
+  console.log("Paymaster is staked? ", resp2);
+  console.log("----------- END ADD STAKLE PAYMASTER -----------");
 
   // Deploy wallet implementation
   console.log("----------- DEPLOY WALLET IMPLEMENTATION -----------");
@@ -247,6 +255,17 @@ async function main() {
     signature: "0x",
   };
 
+  const abi = new ethers.utils.AbiCoder();
+
+  const hash = await paymaster.getHash(userOp);
+
+  userOp.paymasterData = await paymasterSigner.signMessage(
+    ethers.utils.arrayify(hash)
+  );
+
+  console.log("paymasterData: ", userOp.paymasterData);
+  console.log("hash: ", hash);
+
   console.log("----------- BUILD & SEND USER OP -----------");
 
   const requestId = encodeRequestId(userOp, entryPointAddress, 31337);
@@ -260,7 +279,9 @@ async function main() {
     signature,
   });
 
-  const tx = await entryPoint.handleOps([userOp], bundler.address);
+  const tx = await entryPoint.handleOps([userOp], bundler.address, {
+    gasLimit: bn(5000000),
+  });
   const receipt = await tx.wait();
   //   console.log(receipt);
 

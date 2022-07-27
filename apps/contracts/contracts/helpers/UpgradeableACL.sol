@@ -158,13 +158,9 @@ abstract contract UpgradeableACL is IERC1271, Initializable, UUPSUpgradeable, Ac
     bytes32 hash,
     bytes memory signature
   ) internal view {
-    console.log("idhar tk to aya h lein verify ni hua kya?");
-
     uint256 test = isOwner(signer) ? 1 : 0;
 
     uint256 newTest = SignatureChecker.isValidSignatureNow(signer, hash, signature) ? 1 : 0;
-
-    console.log("yaha p dikkat h %d %d", test, newTest);
 
     require(SignatureChecker.isValidSignatureNow(signer, hash, signature), "ACL: Invalid owner sig");
     require(isOwner(signer), "ACL: Signer not an owner");

@@ -51,7 +51,6 @@ library EntryPointHelpers {
    */
   function requestId(UserOperation calldata op) internal view returns (bytes32) {
     console.logBytes32(hash(op));
-    console.log("address: %s, chainid: %d", address(this), block.chainid);
     return keccak256(abi.encode(hash(op), address(this), block.chainid));
   }
 

@@ -124,7 +124,6 @@ contract EntryPoint is IEntryPoint, Staking {
 
     _createWalletIfNecessary(opIndex, op);
     bytes32 requestId = op.requestId();
-    console.log("requestId");
     console.logBytes32(requestId);
     uint256 prefund = op.requiredPrefund();
     _validateWallet(opIndex, op, requestId, prefund);
@@ -165,7 +164,6 @@ contract EntryPoint is IEntryPoint, Staking {
     bytes32 requestId,
     uint256 prefund
   ) internal {
-    console.log("yaha par to hu");
     uint256 requiredPrefund = op.hasPaymaster() ? 0 : prefund;
     uint256 initBalance = address(this).balance;
 
@@ -174,7 +172,6 @@ contract EntryPoint is IEntryPoint, Staking {
     } catch Error(string memory reason) {
       revert FailedOp(opIndex, reason);
     } catch (bytes memory error) {
-      console.log("bina reason ki error");
       revert FailedOp(opIndex, string(error));
     }
 
@@ -194,7 +191,9 @@ contract EntryPoint is IEntryPoint, Staking {
   ) internal returns (bytes memory) {
     if (!op.hasPaymaster()) return new bytes(0);
 
-    requireFailedOp(isStaked(op.paymaster), opIndex, "EntryPoint: Deposit not staked");
+    bool isPaymasterStaked = isStaked(op.paymaster);
+
+    requireFailedOp(isPaymasterStaked, opIndex, "EntryPoint: Deposit not staked");
     _decreaseStake(op.paymaster, prefund);
 
     try IPaymaster(op.paymaster).validatePaymasterUserOp{ gas: validationGas }(op, requestId, prefund) returns (
@@ -202,8 +201,10 @@ contract EntryPoint is IEntryPoint, Staking {
     ) {
       return result;
     } catch Error(string memory reason) {
+      console.log("Error with reason: %d", reason);
       revert FailedOp(opIndex, reason);
     } catch (bytes memory error) {
+      console.log("Error without reason: %d", string(error));
       revert FailedOp(opIndex, string(error));
     }
   }

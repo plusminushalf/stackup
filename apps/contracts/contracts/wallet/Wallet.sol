@@ -57,15 +57,12 @@ contract Wallet is IWallet, UpgradeableACL, Paymaster {
     bytes32 requestId,
     uint256 requiredPrefund
   ) external override authenticate {
-    console.log("idhar aya bhi h");
     require(nonce++ == op.nonce, "Wallet: Invalid nonce");
 
     SignatureData memory signatureData = op.decodeSignature();
-    console.log("decode hua h %d", uint256(signatureData.mode));
     signatureData.mode == SignatureMode.owner
       ? _validateOwnerSignature(signatureData, requestId)
       : _validateGuardiansSignature(signatureData, op, requestId);
-    console.log("signature validation phata?");
 
     if (requiredPrefund > 0) {
       payable(entryPoint).sendValue(requiredPrefund, "Wallet: Failed to prefund");
